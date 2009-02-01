@@ -8,10 +8,11 @@ task :run do
   system "time ./Darwin"
 end
 
-desc "clear all iteration images"
-task :clear do
+desc "remove iteration images and compiled code"
+task :clean do
   `rm iteration*.jpg`
+  `rm Darwin Darwin.hi Darwin.o`
 end
 
 desc "clean up and run Darwin"
-task :default => [:clear, :compile, :run]
+task :default => [:clean, :compile, :run]

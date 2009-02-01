@@ -40,9 +40,6 @@ targetPixelColors width height = do image <- targetImage
                                  where mapColor image point = do color <- getPixel point image
                                                                  return (point, color)
 
-printRectangle :: Rectangle -> IO ()
-printRectangle (start, end, color) = putStrLn $ "(" ++ (show start) ++ ", " ++ (show end) ++ ", " ++ (show color) ++ ")"
-
 randomNumberGenerator = randomR (0, 100)
 randomRGBGenerator    = randomR (0, 255)
 randomAlphaGenerator  = randomR (10, 40)
@@ -82,10 +79,6 @@ drawRectangle (start, end, color) image = drawFilledRectangle start end color im
 
 initialDNA :: Int -> Int -> IO DNA
 initialDNA maxX maxY = sequence [randomRectangle maxX maxY | _ <- [1..objects]]
-
-printDNA :: IO DNA -> IO ()
-printDNA dna = do rectangles <- dna
-                  mapM_ printRectangle rectangles
 
 drawDNAImage :: Int -> Int -> IO DNA -> IO Image
 drawDNAImage width height ioDNA = do image <- newImage (width, height)
