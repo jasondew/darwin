@@ -1,7 +1,8 @@
 import Prelude hiding (lookup)
+import Graphics.GD
 import System.Random
 import Control.Monad
-import Graphics.GD
+import Control.Parallel
 import Foreign.C.Types
 import Data.Bits
 import Data.Map hiding (map)
@@ -207,4 +208,6 @@ main = do startTime       <- getCurrentTime
           target          <- targetPixelColors width height
           dna             <- initialDNA numberOfObjects width height
           fits            <- runSimulation (fromList target) width height dna numberOfIterations
-          putStrLn $ show fits
+
+          endTime <- getCurrentTime
+          putStrLn $ (show endTime) ++ ": processing ended"
