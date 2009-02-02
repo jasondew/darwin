@@ -11,25 +11,31 @@ import Text.Printf
 type Rectangle = (Point, Point, Color)
 type DNA = [Rectangle]
 
-objects :: Int
-objects = 1000
+numberOfObjects :: Int
+numberOfObjects = 5
+
+numberOfAdditions :: Int
+numberOfAdditions = 1
+
+additionProbability :: Int
+additionProbability = 1
 
 mutationProbability :: Int
-mutationProbability = 50
+mutationProbability = 10
 
 numberOfIterations :: Int
 numberOfIterations = 1000000
 
 snapshotEvery :: Int
-snapshotEvery = 500
+snapshotEvery = 10
 
 jpegQuality :: Int
 jpegQuality = 90
 
--- =======================================================================================================================
-
 targetPath :: String
-targetPath = "monalisa-small.jpg"
+targetPath = "monalisa.jpg"
+
+-- =======================================================================================================================
 
 targetImage :: IO Image
 targetImage = loadJpegFile targetPath
@@ -42,7 +48,7 @@ targetPixelColors width height = do image <- targetImage
 
 randomNumberGenerator = randomR (0, 100)
 randomRGBGenerator    = randomR (0, 255)
-randomAlphaGenerator  = randomR (10, 40)
+randomAlphaGenerator  = randomR (0, 127)
 
 randomColor :: IO Color
 randomColor = do red   <- getStdRandom randomRGBGenerator
@@ -77,8 +83,8 @@ randomRectangle maxX maxY = do start <- randomPoint maxX maxY
 drawRectangle :: Rectangle -> Image -> IO ()
 drawRectangle (start, end, color) image = drawFilledRectangle start end color image
 
-initialDNA :: Int -> Int -> IO DNA
-initialDNA maxX maxY = sequence [randomRectangle maxX maxY | _ <- [1..objects]]
+initialDNA :: Int -> Int -> Int -> IO DNA
+initialDNA objects maxX maxY = sequence [randomRectangle maxX maxY | _ <- [1..objects]]
 
 drawDNAImage :: Int -> Int -> IO DNA -> IO Image
 drawDNAImage width height ioDNA = do image <- newImage (width, height)
@@ -120,10 +126,16 @@ mutateRectangle (start, end, color) maxX maxY = do possiblyMutatedStart <- maybe
                                                    possiblyMutatedColor <- maybeMutateColor color
                                                    return (possiblyMutatedStart, possiblyMutatedEnd, possiblyMutatedColor)
 
+maybeNewRectangles :: Int -> Int -> IO [Rectangle]
+maybeNewRectangles maxX maxY = do randomNumber <- getStdRandom randomNumberGenerator
+                                  case randomNumber < additionProbability of
+                                    True  -> mapM (\i -> randomRectangle maxX maxY) [1..numberOfAdditions]
+                                    False -> return []
 mutateDNA :: DNA -> Int -> Int -> IO DNA
 mutateDNA (rectangle:rectangles) maxX maxY = do possiblyMutatedRectangle  <- maybeMutateRectangle rectangle maxX maxY
                                                 possiblyMutatedRectangles <- mutateDNA rectangles maxX maxY
-                                                return $ (possiblyMutatedRectangle : possiblyMutatedRectangles)
+                                                possiblyNewRectangles     <- maybeNewRectangles maxX maxY
+                                                return $ (possiblyMutatedRectangle : possiblyMutatedRectangles) ++ possiblyNewRectangles
 mutateDNA _ _ _                            = return []
 
 colorDifference :: Color -> Color -> Float
@@ -143,20 +155,28 @@ fitness target image width height = do deltas <- mapM (\point -> comparePixel po
                                                       [(x, y) | x <- [1..width], y <- [1..height]]
                                        return $ sum deltas
 
-printStatus :: Int -> Float -> Image -> IO ()
-printStatus iteration fit image = do currentTime <- getCurrentTime
-                                     printf "%30s: iteration: %8d, fit: %15f\n" (show currentTime) iteration fit
-                                     saveJpegFile jpegQuality ("iteration" ++ (show iteration) ++ ".jpg") image
+printStatus :: Int -> Float -> [Float] -> Int -> IO ()
+printStatus iteration fit previousFits objects = do currentTime <- getCurrentTime
+                                                    printf "%30s: iteration: %8d, objects: %5d, fit: %14.0f, fit delta: %12.0f, percent improvement: %5.1f%%\n"
+                                                           (show currentTime) iteration objects fit delta percentImprovement
+
+                                                 where findLastSeenFit []   = 0.0
+                                                       findLastSeenFit fits = fits !! (snapshotEvery `mod` (length fits))
+
+                                                       lastSeenFit        = findLastSeenFit previousFits
+                                                       delta              = lastSeenFit - fit
+                                                       percentImprovement = 100.0 * (delta / lastSeenFit)
 
 nextGeneration :: Map Point Color -> Int -> Int -> DNA -> Float -> Int -> IO (DNA, Float)
 nextGeneration target width height currentDNA currentFit iteration =
-  do mutatedDNA   <- mutateDNA currentDNA width height
+  do case iteration `mod` snapshotEvery of
+       0         -> do image <- drawDNAImage width height $ return currentDNA
+                       saveJpegFile jpegQuality ("iteration" ++ (show iteration) ++ ".jpg") image
+       otherwise -> return ()
+
+     mutatedDNA   <- mutateDNA currentDNA width height
      mutatedImage <- drawDNAImage width height $ return mutatedDNA
      mutatedFit   <- fitness target mutatedImage width height
-
-     case iteration `mod` snapshotEvery of
-       0         -> printStatus iteration currentFit mutatedImage
-       otherwise -> return ()
 
      case (mutatedFit < currentFit) of
        True  -> return (mutatedDNA, mutatedFit)
@@ -166,17 +186,25 @@ simulationStep :: Map Point Color -> Int -> Int -> DNA -> Int -> Int -> [Float] 
 simulationStep target width height currentDNA iteration totalIterations fits@(currentFit:_)
   | iteration == totalIterations = return fits
   | otherwise                    = do (nextDNA, nextFit) <- nextGeneration target width height currentDNA currentFit iteration
-                                      simulationStep target width height currentDNA (iteration + 1) totalIterations (nextFit:fits)
+
+                                      case iteration `mod` snapshotEvery of
+                                        0         -> printStatus iteration currentFit fits $ length currentDNA
+                                        otherwise -> return ()
+
+                                      simulationStep target width height nextDNA (iteration + 1) totalIterations (nextFit:fits)
 
 runSimulation :: Map Point Color -> Int -> Int -> DNA -> Int -> IO [Float]
-runSimulation target width height initialDNA iterations = simulationStep target width height initialDNA 0 iterations [1e12]
+runSimulation target width height ivDNA iterations = simulationStep target width height ivDNA 0 iterations [1e12]
 
 main :: IO ()
 main = do startTime       <- getCurrentTime
-          putStrLn $ (show startTime) ++ ": processing started; objects = " ++ (show objects) ++ ", mutation probability = " ++ (show mutationProbability)
+          putStrLn $ (show startTime) ++ ": processing started; initial objects = " ++ (show numberOfObjects) ++ 
+                     ", increment = " ++ (show numberOfAdditions) ++ 
+                     ", increment probability = " ++ (show additionProbability) ++
+                     ", mutation probability = " ++ (show mutationProbability)
 
           (width, height) <- withImage targetImage imageSize
           target          <- targetPixelColors width height
-          dna             <- initialDNA width height
+          dna             <- initialDNA numberOfObjects width height
           fits            <- runSimulation (fromList target) width height dna numberOfIterations
           putStrLn $ show fits
