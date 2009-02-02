@@ -1,0 +1,92 @@
+[Initial darcs import.
+bjornÂ@bringert.net**20051003170513] 
+[Added quality argument to saveJpeg. Renamed C files to gd-wrapper.
+bjornÂ@bringert.net**20051011210144] 
+[Use ForeignPtr to avoid explicit freeing of images.
+bjornÂ@bringert.net**20051011212135] 
+[Added function for loading jpegs from memory.
+bjornÂ@bringert.net**20051011213553] 
+[Added loadJpegString.
+bjornÂ@bringert.net**20051203193144] 
+[Changed to date based version numbering.
+bringert@cs.chalmers.se**20060323182658] 
+[Added description fields for hask-home.
+bringert@cs.chalmers.se**20060323183308] 
+[Added README.
+bjorn@bringert.net**20060523182948] 
+[Moved C bits to cbits/.
+bjorn@bringert.net**20060606040304] 
+[Uses hsc2hs instead of the C wrapper. Bumped version number. Better error handling.
+bjorn@bringert.net**20060711012018] 
+[Added PNG support.
+bjorn@bringert.net**20060711022438] 
+[Renamed image saving functions.
+bjorn@bringert.net**20060711030516] 
+[Added GIF support.
+bjorn@bringert.net**20060711033839] 
+[Added rotateImage.
+bjorn@bringert.net**20060711233622] 
+[Changed argument orders so that the image argument is always last. Updated resize example program. Bumped version number.
+bjorn@bringert.net**20060712005217] 
+[Added gd-extras.c, with functions missing from GD. Added a right-angle rotation function and use that in rotateImage.
+bjorn@bringert.net**20060712235233] 
+[Bumped version number.
+bjorn@bringert.net**20060712235515] 
+[Fixed haddock comment about rotation direction.
+bjorn@bringert.net**20060712235911] 
+[Added png to extra-libraries.
+bjorn@bringert.net**20060713005210] 
+[Added some drawing functions. Exposed functions for creating empty images and copying images.
+bringert@cs.chalmers.se**20060907163512] 
+[Added anti-aliasing stuff that seems to cause a segfaul for now.
+bringert@cs.chalmers.se**20060907170245] 
+[Used the crashing antiAliased in rounded-corner.hs
+bringert@cs.chalmers.se**20060907170956] 
+[Remove hmarkup in package description.
+bjorn@bringert.net**20070206131338] 
+[Removed homepage URL, added ForeignFunctionInterface extension. Added includes and install-includes.
+bjorn@bringert.net**20070206152754] 
+[Change version number scheme. Set version number to 1.0.
+bjorn@bringert.net**20070206152834] 
+[Removed duplicate includes directive.
+bjorn@bringert.net**20070206154833] 
+[Added extra-source-files:  cbits/gd-extras.h. Reported by Ross Paterson.
+bringert@cs.chalmers.se**20070207100645] 
+[Changed version number to 3000.0.0 to avoid ordering problems with old date-based version numbers.
+bjorn@bringert.net**20070211094027] 
+[Include gd.h in gd-extras.h
+bjorn@bringert.net**20070422183254] 
+[Bump version number to 3000.0.1
+bjorn@bringert.net**20070422183619] 
+[Added drawLine.
+scsibug@imap.cc**20070421024330] 
+[Added setPixel.
+scsibug@imap.cc**20070421024420] 
+[Demo programs for setPixel and drawLine.
+scsibug@imap.cc**20070421024705] 
+[Added drawArc.
+scsibug@imap.cc**20070421030604] 
+[Demo program for drawArc.
+scsibug@imap.cc**20070421030650] 
+[Changed version number to 3000.1.0.
+bjorn@bringert.net**20070510115129] 
+[Use newtype for Image, to avoid exporting the implementation type.
+bjorn@bringert.net**20070519202700] 
+[Added withImage, which allows block-scoped management of Image objects.
+bjorn@bringert.net**20070520205340] 
+[Changed version number to 3000.2.0.
+bjorn@bringert.net**20070520205433] 
+[Expanded interface--saving to ByteString; copying image regions with scaling; drawing text
+Nick Ingolia <nick@ingolia.org>**20070711223924] 
+[Bumped version number to 3000.3.0, since the API has changed.
+bjorn@bringert.net**20070713090009] 
+[Moved Color argument to measureString and drawString. All other drawing functions use the convention that the Color is the second-to-last argument, right before the Image.
+bjorn@bringert.net**20070713092107] 
+[Added extra-libraries required by the new freetype and fontconfig stuff.
+bringert@cs.chalmers.se**20070714194239] 
+[Use current bytestring API.
+bjorn@bringert.net**20071206234325] 
+[Use cabal configurations.
+bjorn@bringert.net**20071206234430] 
+[Bumped version number to 3000.4.0.
+bjorn@bringert.net**20071214084253] 

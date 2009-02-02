@@ -1,0 +1,31 @@
+name: gd
+version: 3000.4.0
+license: BSD3
+copyright: Bjorn Bringert
+maintainer: bjorn@bringert.net
+stability:
+homepage:
+package-url:
+description: This is a binding to a (currently very small) subset of
+             the GD graphics library.
+category:
+author: Bjorn Bringert
+exposed: True
+exposed-modules: Graphics.GD
+hidden-modules:
+import-dirs: /usr/local/lib/gd-3000.4.0/ghc-6.10.1
+library-dirs: /usr/local/lib/gd-3000.4.0/ghc-6.10.1 /opt/local/lib
+hs-libraries: HSgd-3000.4.0
+extra-libraries: gd png z jpeg m fontconfig freetype pthread expat
+extra-ghci-libraries:
+include-dirs: /opt/local/include
+              /usr/local/lib/gd-3000.4.0/ghc-6.10.1/include
+includes: gd.h
+depends: base-4.0.0.0 bytestring-0.9.1.4
+hugs-options:
+cc-options:
+ld-options:
+framework-dirs:
+frameworks:
+haddock-interfaces: /usr/local/share/doc/gd-3000.4.0/html/gd.haddock
+haddock-html: /usr/local/share/doc/gd-3000.4.0/html
