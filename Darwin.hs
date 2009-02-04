@@ -2,7 +2,6 @@ import Prelude hiding (lookup)
 import Graphics.GD
 import System.Random
 import Control.Monad
-import Control.Parallel
 import Foreign.C.Types
 import Data.Bits
 import Data.Map hiding (map)
