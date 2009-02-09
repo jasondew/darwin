@@ -81,7 +81,7 @@ randomRectangle maxX maxY = do start <- randomPoint maxX maxY
                                return (start, end, color)
 
 drawRectangle :: Rectangle -> Image -> IO ()
-drawRectangle (start, end, color) image = drawFilledRectangle start end color image
+drawRectangle (start, end, color) = drawFilledRectangle start end color
 
 initialDNA :: Int -> Int -> Int -> IO DNA
 initialDNA objects maxX maxY = sequence [randomRectangle maxX maxY | _ <- [1..objects]]
@@ -139,16 +139,16 @@ mutateDNA (rectangle:rectangles) maxX maxY = do possiblyMutatedRectangle  <- may
 mutateDNA _ _ _                            = return []
 
 colorDifference :: Color -> Color -> Float
-colorDifference color1 color2 = let redDelta   = (red color1) - (red color2)
-                                    greenDelta = (green color1) - (green color2)
-                                    blueDelta  = (blue color1) - (blue color2)
+colorDifference color1 color2 = let redDelta   = red color1 - red color2
+                                    greenDelta = green color1 - green color2
+                                    blueDelta  = blue color1 - blue color2
                                 in  sum $ map (** 2.0) [redDelta, greenDelta, blueDelta]
 
 comparePixel :: Point -> Map Point Color -> Image -> IO Float
-comparePixel point target image = do case lookup point target of
-                                       Just color -> do candidateColor <- getPixel point image
-                                                        return $ colorDifference color candidateColor
-                                       Nothing    -> return 0.0
+comparePixel point target image = case lookup point target of
+                                    Just color -> do candidateColor <- getPixel point image
+                                                     return $ colorDifference color candidateColor
+                                    Nothing    -> return 0.0
 
 fitness :: Map Point Color -> Image -> Int -> Int -> IO Float
 fitness target image width height = do deltas <- mapM (\point -> comparePixel point target image)
@@ -161,7 +161,7 @@ printStatus iteration fit previousFits objects = do currentTime <- getCurrentTim
                                                            (show currentTime) iteration objects fit delta percentImprovement
 
                                                  where findLastSeenFit []   = 0.0
-                                                       findLastSeenFit fits = fits !! (snapshotEvery `mod` (length fits))
+                                                       findLastSeenFit fits = fits !! (snapshotEvery `mod` length fits)
 
                                                        lastSeenFit        = findLastSeenFit previousFits
                                                        delta              = lastSeenFit - fit
@@ -171,7 +171,7 @@ nextGeneration :: Map Point Color -> Int -> Int -> DNA -> Float -> Int -> IO (DN
 nextGeneration target width height currentDNA currentFit iteration =
   do case iteration `mod` snapshotEvery of
        0         -> do image <- drawDNAImage width height $ return currentDNA
-                       saveJpegFile jpegQuality ("iteration" ++ (show iteration) ++ ".jpg") image
+                       saveJpegFile jpegQuality ("iteration" ++ show iteration ++ ".jpg") image
        otherwise -> return ()
 
      mutatedDNA   <- mutateDNA currentDNA width height
@@ -198,10 +198,10 @@ runSimulation target width height ivDNA iterations = simulationStep target width
 
 main :: IO ()
 main = do startTime       <- getCurrentTime
-          putStrLn $ (show startTime) ++ ": processing started; initial objects = " ++ (show numberOfObjects) ++ 
-                     ", increment = " ++ (show numberOfAdditions) ++ 
-                     ", increment probability = " ++ (show additionProbability) ++
-                     ", mutation probability = " ++ (show mutationProbability)
+          putStrLn $ show startTime ++ ": processing started; initial objects = " ++ show numberOfObjects ++ 
+                     ", increment = " ++ show numberOfAdditions ++ 
+                     ", increment probability = " ++ show additionProbability ++
+                     ", mutation probability = " ++ show mutationProbability
 
           (width, height) <- withImage targetImage imageSize
           target          <- targetPixelColors width height
@@ -209,4 +209,4 @@ main = do startTime       <- getCurrentTime
           fits            <- runSimulation (fromList target) width height dna numberOfIterations
 
           endTime <- getCurrentTime
-          putStrLn $ (show endTime) ++ ": processing ended"
+          putStrLn $ show endTime ++ ": processing ended"
