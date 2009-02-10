@@ -10,7 +10,7 @@ end
 
 desc "remove iteration images and compiled code"
 task :clean do
-  `rm iteration*.jpg`
+  `rm iteration*.png`
   `rm Darwin Darwin.hi Darwin.o`
 end
 
