@@ -33,6 +33,7 @@ module Graphics.GD (
                     antiAliased,
                     setPixel,
                     getPixel,
+                    getPixels,
                     -- * Text
                     useFontConfig,
                     drawString, measureString,
@@ -173,7 +174,7 @@ foreign import ccall "gd.h gdImageSetAntiAliased" gdImageSetAntiAliased
 foreign import ccall "gd.h gdImageSetPixel" gdImageSetPixel
     :: Ptr GDImage -> CInt -> CInt -> CInt -> IO ()
 
-foreign import ccall "gd.h gdImageGetPixel" gdImageGetPixel
+foreign import ccall "gd.h gdImageGetTrueColorPixel" gdImageGetTrueColorPixel
     :: Ptr GDImage -> CInt -> CInt -> IO Color
 
 -- Text functions
@@ -476,14 +477,16 @@ antiAliased f c i =
        f (#{const gdAntiAliased}) i
 
 setPixel :: Point -> Color -> Image -> IO ()
-setPixel (x,y) c i =
-    withImagePtr i $ \p ->
-        gdImageSetPixel p (int x) (int y) c
+setPixel (x,y) c i = withImagePtr i $ \p -> gdImageSetPixel p (int x) (int y) c
 
 getPixel :: Point -> Image -> IO Color
-getPixel (x,y) i =
-    withImagePtr i $ \p ->
-        gdImageGetPixel p (int x) (int y)
+getPixel (x,y) i = withImagePtr i $ \p -> gdImageGetTrueColorPixel p (int x) (int y)
+
+getPixels :: Image -> IO [[Color]]
+getPixels image = do (width, height)  <- imageSize image
+                     pixelsPointer    <- withImagePtr image $ \gdi -> #{peek gdImage, tpixels} gdi
+                     columnPixelArray <- peekArray height pixelsPointer
+                     mapM (\a -> peekArray width a) columnPixelArray
 
 --
 -- * Text

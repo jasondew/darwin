@@ -25,7 +25,7 @@ mutationProbability :: Int
 mutationProbability = 20
 
 numberOfIterations :: Int
-numberOfIterations = 1000000
+numberOfIterations = 30
 
 snapshotEvery :: Int
 snapshotEvery = 10
@@ -37,12 +37,6 @@ targetPath = "monalisa.jpg"
 
 targetImage :: IO Image
 targetImage = loadJpegFile targetPath
-
-pixelColors :: IO Image -> Int -> Int -> IO [(Point, RGB)]
-pixelColors io_image width height = do image <- io_image
-                                       mapM (\point -> getRGB image point) [(x, y) | x <- [1..width], y <- [1..height]]
-                                    where getRGB image point = do color <- getPixel point image
-                                                                  return (point, (red color, green color, blue color))
 
 randomNumberGenerator = randomR (0, 100)
 randomRGBGenerator    = randomR (0, 255)
@@ -136,20 +130,12 @@ mutateDNA (rectangle:rectangles) maxX maxY = do possiblyMutatedRectangle  <- may
                                                 return $ (possiblyMutatedRectangle : possiblyMutatedRectangles) ++ possiblyNewRectangles
 mutateDNA _ _ _                            = return []
 
-rgbDifference :: RGB -> RGB -> Double
-rgbDifference (r1, g1, b1) (r2, g2, b2) = sum $ map (\d -> (fromIntegral d) ** 2) [r1 - r2, g1 - g2, b1 - b2]
+colorDifference :: Color -> Color -> Double
+colorDifference c1 c2 = sum $ map (\d -> (fromIntegral d) ** 2) [red c1 - red c2, green c1 - green c2, blue c1 - blue c2]
 
-comparePixel :: Point -> Map Point RGB -> Image -> IO Double
-comparePixel point target image = case lookup point target of
-                                       Just rgb -> do candidateColor <- getPixel point image
-                                                      return $ rgbDifference rgb (red candidateColor, green candidateColor, blue candidateColor)
-                                       Nothing  -> return $ 0.0
-
-fitness :: Map Point RGB -> Image -> Int -> Int -> IO Double
-fitness target image width height = foldl pixelFitness (return 0.0) [(x, y) | x <- [1..width], y <- [1..height]]
-                                    where pixelFitness total point = do t <- total
-                                                                        f <- comparePixel point target image
-                                                                        return $ f + t
+fitness :: [[Color]] -> [[Color]] -> Double
+fitness as bs = sum $ zipWith columnZip as bs
+          where columnZip cs ds = sum $ zipWith colorDifference cs ds
 
 printStatus :: Int -> Double -> [Double] -> Int -> IO ()
 printStatus iteration fit previousFits objects = do currentTime <- getCurrentTime
@@ -163,22 +149,23 @@ printStatus iteration fit previousFits objects = do currentTime <- getCurrentTim
                                                        delta              = lastSeenFit - fit
                                                        percentImprovement = 100.0 * (delta / lastSeenFit)
 
-nextGeneration :: Map Point RGB -> Int -> Int -> DNA -> Double -> Int -> IO (DNA, Double)
+nextGeneration :: [[Color]] -> Int -> Int -> DNA -> Double -> Int -> IO (DNA, Double)
 nextGeneration target width height currentDNA currentFit iteration =
   do case iteration `mod` snapshotEvery of
        0         -> do image <- drawDNAImage width height $ return currentDNA
                        savePngFile ("iteration" ++ show iteration ++ ".png") image
        otherwise -> return ()
 
-     mutatedDNA   <- mutateDNA currentDNA width height
-     mutatedImage <- drawDNAImage width height $ return mutatedDNA
-     mutatedFit   <- fitness target mutatedImage width height
+     mutatedDNA    <- mutateDNA currentDNA width height
+     mutatedImage  <- drawDNAImage width height $ return mutatedDNA
+     mutatedPixels <- getPixels mutatedImage
+     mutatedFit    <- return $ fitness target mutatedPixels
 
      case (mutatedFit < currentFit) of
        True  -> return (mutatedDNA, mutatedFit)
        False -> return (currentDNA, currentFit)
 
-simulationStep :: Map Point RGB -> Int -> Int -> DNA -> Int -> Int -> [Double] -> IO [Double]
+simulationStep :: [[Color]] -> Int -> Int -> DNA -> Int -> Int -> [Double] -> IO [Double]
 simulationStep target width height currentDNA iteration totalIterations fits@(currentFit:_)
   | iteration == totalIterations = return fits
   | otherwise                    = do (nextDNA, nextFit) <- nextGeneration target width height currentDNA currentFit iteration
@@ -189,7 +176,7 @@ simulationStep target width height currentDNA iteration totalIterations fits@(cu
 
                                       simulationStep target width height nextDNA (iteration + 1) totalIterations (nextFit:fits)
 
-runSimulation :: Map Point RGB -> Int -> Int -> DNA -> Int -> IO [Double]
+runSimulation :: [[Color]] -> Int -> Int -> DNA -> Int -> IO [Double]
 runSimulation target width height ivDNA iterations = simulationStep target width height ivDNA 0 iterations [1e12]
 
 main :: IO ()
@@ -200,9 +187,10 @@ main = do startTime <- getCurrentTime
                      ", mutation probability = " ++ show mutationProbability
 
           (width, height) <- withImage targetImage imageSize
-          target          <- pixelColors targetImage width height
+          target          <- targetImage
+          targetPixels    <- getPixels target
           dna             <- initialDNA numberOfObjects width height
-          fits            <- runSimulation (fromList target) width height dna numberOfIterations
+          fits            <- runSimulation targetPixels width height dna numberOfIterations
 
           endTime <- getCurrentTime
           putStrLn $ show endTime ++ ": processing ended"

@@ -1,5 +1,6 @@
 Darwin
-Darwin.hi
-Darwin.o
+*.hi
+*.o
+*.a
 iteration*.jpg
 tmp
