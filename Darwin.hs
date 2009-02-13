@@ -1,3 +1,6 @@
+--TODO keep and analyze convergence for optimal parameters
+--TODO have generation size > 1, possibly different types
+
 import Prelude hiding (lookup)
 import Graphics.GD
 import System.Random
@@ -8,32 +11,35 @@ import Data.Map hiding (map)
 import Data.Time
 import Text.Printf
 
-type Rectangle = (Point, Point, Color)
-type DNA = [Rectangle]
-type RGB = (Int, Int, Int)
+-- =======================================================================================================================
+-- Parameters
+-- =======================================================================================================================
 
-numberOfObjects :: Int
-numberOfObjects = 10
+numberOfObjects :: Int          -- initial number of objects, randomly generated
+numberOfObjects = 5
 
-numberOfAdditions :: Int
+mutationProbability :: Int      -- number from 0 to 100 representing the probability of mutating each object
+mutationProbability = 25
+
+additionProbability :: Int      -- number from 0 to 100 representing the probability of adding objects
+additionProbability = 2
+
+numberOfAdditions :: Int        -- number of objects to add at a time
 numberOfAdditions = 2
 
-additionProbability :: Int
-additionProbability = 1
+numberOfIterations :: Int       -- number of interations to complete
+numberOfIterations = 1000000
 
-mutationProbability :: Int
-mutationProbability = 20
-
-numberOfIterations :: Int
-numberOfIterations = 30
-
-snapshotEvery :: Int
-snapshotEvery = 10
-
-targetPath :: String
+targetPath :: String            -- path of the image to aim for
 targetPath = "monalisa.jpg"
 
+snapshotEvery :: Int            -- how often to write out the candidate image
+snapshotEvery = 1000
+
 -- =======================================================================================================================
+
+type Rectangle = (Point, Point, Color)
+type DNA = [Rectangle]
 
 targetImage :: IO Image
 targetImage = loadJpegFile targetPath
