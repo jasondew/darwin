@@ -33,20 +33,11 @@ allowedOptions = [Option ['t'] ["target"]                (ReqArg TargetPath     
 header :: String
 header = "Usage: Darwin [OPTIONS...] image"
 
-getOptions :: [String] -> IO [Flag]
+getOptions :: [String] -> IO ([Flag], String)
 getOptions argv = case getOpt Permute allowedOptions argv of
-                       (options, _,   []) -> return options
-                       (      _, _, errs) -> ioError (userError (concat errs ++ usageInfo header allowedOptions))
-
-targetPath :: [Flag] -> Maybe String
-targetPath ((TargetPath t):_) = Just t
-targetPath (_:fs)             = targetPath fs
-targetPath []                 = Nothing
-
-targetImage :: [Flag] -> IO Image
-targetImage options = case (targetPath options) of
-                        Just path -> loadJpegFile path
-                        Nothing   -> ioError $ userError $ usageInfo header allowedOptions
+                       (options, (path:[]),   []) -> return (options, path)
+                       (      _,        [],    _) -> ioError (userError ("Target must be specified" ++ usageInfo header allowedOptions))
+                       (      _,         _, errs) -> ioError (userError (concat errs ++ usageInfo header allowedOptions))
 
 startingObjects :: [Flag] -> Int
 startingObjects ((StartingObjects i):_) = i
@@ -127,7 +118,7 @@ drawDNAImage width height ioDNA = do image <- newImage (width, height)
 mutate :: IO Bool
 mutate = do randomNumber <- getStdRandom randomNumberGenerator
             args         <- getArgs
-            options      <- getOptions args
+            (options, _) <- getOptions args
 
             let probability = mutationProbability options
 
@@ -136,7 +127,7 @@ mutate = do randomNumber <- getStdRandom randomNumberGenerator
 additions :: IO Int
 additions = do randomNumber <- getStdRandom randomNumberGenerator
                args         <- getArgs
-               options      <- getOptions args
+               (options, _) <- getOptions args
 
                let probability = additionProbability options
                    number      = numberOfAdditions options
@@ -239,12 +230,13 @@ simulationStep target width height currentDNA iteration iterations snapshotFreq 
                                  simulationStep target width height nextDNA (iteration + 1) iterations snapshotFreq (nextFit:fits)
 
 runSimulation :: [[Color]] -> Int -> Int -> DNA -> Int -> Int -> IO [Double]
---FIXME need to compute the maximum error
-runSimulation target width height ivDNA iterations snapshotFreq = simulationStep target width height ivDNA 0 iterations snapshotFreq [1e12]
+runSimulation target width height ivDNA iterations snapshotFreq =
+  simulationStep target width height ivDNA 0 iterations snapshotFreq [maxError]
+  where maxError = (255 ** 3) * (fromIntegral width) * (fromIntegral height)
 
 main :: IO ()
-main = do argv      <- getArgs
-          options   <- getOptions argv
+main = do argv            <- getArgs
+          (options, path) <- getOptions argv
 
           let
             objects      = startingObjects options
@@ -254,8 +246,8 @@ main = do argv      <- getArgs
             iterations   = numberOfIterations options
             snapshotFreq = snapshotFrequency options
 
-          target          <- targetImage options
-          (width, height) <- withImage (targetImage options) imageSize
+          target          <- loadJpegFile path
+          (width, height) <- withImage (loadJpegFile path) imageSize
           targetPixels    <- getPixels target
           dna             <- initialDNA objects width height
 

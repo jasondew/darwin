@@ -10,7 +10,7 @@ end
 
 desc "run Darwin"
 task :run do
-  system "time ./Darwin"
+  system "time ./Darwin monalisa.jpg"
 end
 
 desc "remove iteration images and compiled code"
