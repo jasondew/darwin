@@ -22,21 +22,20 @@ data Flag = TargetPath String | StartingObjects Int | MutationProbability Int | 
             deriving Show
 
 allowedOptions :: [OptDescr Flag]
-allowedOptions = [Option ['t'] ["target"]                (ReqArg TargetPath                   "JPEG only")      "target image",
-                  Option ['i'] ["initial"]               (ReqArg (StartingObjects . read)     "n > 0")          "initial number of objects",
-                  Option ['m'] ["mutation_probability"]  (ReqArg (MutationProbability . read) "0 <= p <= 100")  "mutation probability",
-                  Option ['a'] ["addition_probability"]  (ReqArg (AdditionProbability . read) "0 <= p <= 100")  "addition probability",
-                  Option ['d'] ["addition_number"]       (ReqArg (NumberOfAdditions . read)   "n >= 0")         "number of additions",
-                  Option ['n'] ["iterations"]            (ReqArg (NumberOfIterations . read)  "n > 0")          "number of iterations",
-                  Option ['s'] ["snapshot_frequency"]    (ReqArg (SnapshotFrequency . read)   "n > 0")          "snapshot frequency n iterations"]
+allowedOptions = [Option ['v'] ["initial"]               (ReqArg (StartingObjects . read)     "5")       "initial number of objects, n > 0",
+                  Option ['m'] ["mutation_probability"]  (ReqArg (MutationProbability . read) "25")      "mutation probability, 0 <= p <= 100",
+                  Option ['a'] ["addition_probability"]  (ReqArg (AdditionProbability . read) "2")       "addition probability, 0 <= p <= 100",
+                  Option ['d'] ["addition_number"]       (ReqArg (NumberOfAdditions . read)   "3")       "number of additions, n >= 0",
+                  Option ['i'] ["iterations"]            (ReqArg (NumberOfIterations . read)  "1000000") "number of iterations, n > 0",
+                  Option ['s'] ["snapshot_frequency"]    (ReqArg (SnapshotFrequency . read)   "1000")    "snapshot frequency n iterations, n > 0"]
 
 header :: String
-header = "Usage: Darwin [OPTIONS...] image"
+header = "Usage: Darwin [OPTIONS...] target_image.jpg"
 
 getOptions :: [String] -> IO ([Flag], String)
 getOptions argv = case getOpt Permute allowedOptions argv of
                        (options, (path:[]),   []) -> return (options, path)
-                       (      _,        [],    _) -> ioError (userError ("Target must be specified" ++ usageInfo header allowedOptions))
+                       (      _,        [],    _) -> ioError (userError ("Target image must be specified)\n" ++ usageInfo header allowedOptions))
                        (      _,         _, errs) -> ioError (userError (concat errs ++ usageInfo header allowedOptions))
 
 startingObjects :: [Flag] -> Int
@@ -57,7 +56,7 @@ additionProbability []                          = 2
 numberOfAdditions :: [Flag] -> Int
 numberOfAdditions ((NumberOfAdditions i):_) = i
 numberOfAdditions (_:fs)                    = numberOfAdditions fs
-numberOfAdditions []                        = 2
+numberOfAdditions []                        = 3
 
 numberOfIterations :: [Flag] -> Int
 numberOfIterations ((NumberOfIterations i):_) = i

@@ -9,8 +9,13 @@ task :compile_with_profiling do
 end
 
 desc "run Darwin"
-task :run do
+task :run => :compile do
   system "time ./Darwin monalisa.jpg"
+end
+
+desc "profile Darwin"
+task :profile => :compile_with_profiling do
+  system "time ./Darwin -i 3000 monalisa.jpg +RTS -p"
 end
 
 desc "remove iteration images and compiled code"
