@@ -1,6 +1,8 @@
 Darwin
+*.prof
 *.hi
 *.o
 *.a
-iteration*.jpg
+iteration*.png
+*.flv
 tmp
