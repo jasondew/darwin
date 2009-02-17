@@ -1,0 +1,35 @@
+diff -rN old-gd/Graphics/GD.hsc new-gd/Graphics/GD.hsc
+34a35,36
+>                     getPixel,
+>                     getPixels,
+174a177,179
+> foreign import ccall "gd.h gdImageGetTrueColorPixel" gdImageGetTrueColorPixel
+>     :: Ptr GDImage -> CInt -> CInt -> IO Color
+> 
+475,477c480,489
+< setPixel (x,y) c i =
+<     withImagePtr i $ \p ->
+<         gdImageSetPixel p (int x) (int y) c
+---
+> setPixel (x,y) c i = withImagePtr i $ \p -> gdImageSetPixel p (int x) (int y) c
+> 
+> getPixel :: Point -> Image -> IO Color
+> getPixel (x,y) i = withImagePtr i $ \p -> gdImageGetTrueColorPixel p (int x) (int y)
+> 
+> getPixels :: Image -> IO [[Color]]
+> getPixels image = do (width, height)  <- imageSize image
+>                      pixelsPointer    <- withImagePtr image $ \gdi -> #{peek gdImage, tpixels} gdi
+>                      columnPixelArray <- peekArray height pixelsPointer
+>                      mapM (\a -> peekArray width a) columnPixelArray
+572c584
+< double = realToFrac
+\ No newline at end of file
+---
+> double = realToFrac
+diff -rN old-gd/examples/bytesDemo.hs new-gd/examples/bytesDemo.hs
+38c38
+<           savePngFile "bytesDemo.png" comp
+\ No newline at end of file
+---
+>           savePngFile "bytesDemo.png" comp
+
