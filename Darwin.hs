@@ -1,6 +1,8 @@
 --TODO keep and analyze convergence for optimal parameters
 --TODO have generation size > 1, possibly different types
 
+module Darwin () where 
+
 import Prelude hiding (lookup)
 import Control.Monad
 import Data.Bits
